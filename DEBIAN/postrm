@@ -1,0 +1,128 @@
+#!/bin/sh
+
+set -e
+
+clean_dir() {
+    if [ -d "$1" ] && [ ! -L "$1" ]; then
+        rmdir "$1" >/dev/null 2>/dev/null || true
+    fi
+}
+
+drop_cluster() {
+    # if we still have the postgresql-common package, use it to also shutdown
+    # server, etc.; otherwise just remove the directories
+    if [ -x /usr/bin/pg_dropcluster ]; then
+        pg_dropcluster --stop-server $VERSION "$1"
+    else
+        # remove data directory
+        PGDATALINK="/etc/postgresql/$VERSION/$1/pgdata"
+        if [ -e "$PGDATALINK" ]; then
+            rm -rf $(readlink -f "$PGDATALINK") "$PGDATALINK"
+        else
+            rm -rf "/var/lib/postgresql/$VERSION/$1/"
+        fi
+
+        # remove log file, including rotated ones
+        LOGLINK="/etc/postgresql/$VERSION/$1/log"
+        if [ -e "$LOGLINK" ]; then
+            LOG=$(readlink -f "$LOGLINK")
+            rm -f $LOG* "$LOGLINK"
+        else
+            rm -f /var/log/postgresql/postgresql-$VERSION-"$1".log*
+        fi
+
+        # remove conffiles
+        for f in pg_hba.conf pg_ident.conf postgresql.conf start.conf environment pg_ctl.conf; do
+            rm -f /etc/postgresql/$VERSION/"$1"/$f
+        done
+        # remove empty conf.d directories
+        for d in /etc/postgresql/$VERSION/"$1"/*/; do
+            clean_dir "$d"
+        done
+
+        clean_dir /etc/postgresql/$VERSION/"$1"
+    fi
+}
+
+if [ "$1" = purge ]; then
+    [ -d "/etc/postgresql/$VERSION" ] || exit 0
+    if [ "$(ls /etc/postgresql/$VERSION)" ]; then
+        for c in /etc/postgresql/$VERSION/*; do
+            [ -e "$c/postgresql.conf" ] || continue
+            cluster=$(basename "$c")
+            echo "Dropping cluster $cluster..."
+            drop_cluster "$cluster"
+        done
+    fi
+
+    clean_dir /etc/postgresql/$VERSION
+    clean_dir /var/lib/postgresql/$VERSION
+    clean_dir /var/log/postgresql/$VERSION
+fi
+
+if [ remove = "$1" -o abort-install = "$1" -o disappear = "$1" ]; then
+    dpkg-divert --package postgresql-common --remove --rename --divert /usr/bin/pg_config.libpq-dev /usr/bin/pg_config
+fi
+
+if [ "$1" = purge ]; then
+    # remove socket directory
+    rm -rf /var/run/postgresql
+
+    # remove SSL keys
+#    rm -rf /etc/postgresql-common/root.crt 
+
+    [ -d /etc/postgresql-common ] && rmdir --ignore-fail-on-non-empty /etc/postgresql-common || true
+
+    rm -rf /var/cache/postgresql
+
+    # unregister and remove files maintained by ucf
+    CCCONFIG="/etc/postgresql-common/createcluster.conf"
+    if which ucf >/dev/null; then
+	ucf --purge $CCCONFIG
+    fi
+    if which ucfr >/dev/null; then
+	ucfr --purge postgresql-common $CCCONFIG
+    fi
+    rm -f $CCCONFIG $CCCONFIG.ucf-*
+fi
+
+# Automatically added by dh_installinit
+if [ "$1" = "purge" ] ; then
+	update-rc.d postgresql remove >/dev/null
+fi
+
+
+# In case this system is running systemd, we make systemd reload the unit files
+# to pick up changes.
+#if [ -d /run/systemd/system ] ; then
+#	systemctl --system daemon-reload >/dev/null || true
+#fi
+# End automatically added section
+# Automatically added by dh_systemd_enable
+if [ "$1" = "remove" ]; then
+	if [ -x "/usr/bin/deb-systemd-helper" ]; then
+		deb-systemd-helper mask postgresql.service >/dev/null
+	fi
+fi
+
+if [ "$1" = "purge" ]; then
+	if [ -x "/usr/bin/deb-systemd-helper" ]; then
+		deb-systemd-helper purge postgresql.service >/dev/null
+		deb-systemd-helper unmask postgresql.service >/dev/null
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_installdebconf
+if [ "$1" = purge ] && [ -e /usr/share/debconf/confmodule ]; then
+	. /usr/share/debconf/confmodule
+	db_purge
+fi
+# End automatically added section
+if [ "$1" = purge ]; then
+        rm -f /var/lib/postgresql/.psql_history
+        rmdir /var/lib/postgresql/ 2>/dev/null || true
+fi
+
+if [ "$1" = "remove" ]; then
+        ldconfig
+fi

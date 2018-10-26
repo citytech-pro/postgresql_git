@@ -1,0 +1,75 @@
+#!/bin/sh
+
+set -e
+
+MAJOR_VER="${DPKG_MAINTSCRIPT_PACKAGE#postgresql-}"
+CATVERSION="201707211" # set by override_dh_installdeb
+
+# Compare the catalog version number of the installed package and the new
+# package. When differing, check if any clusters present are using the old
+# catalog version. If so, copy a minimal set of files from the old package to
+# /var/tmp to enable pg_upgrade to upgrade to the new version.
+
+preinst_check_catversion()
+{
+    MAJOR_VER="$1"
+    NEW_CATVERSION="$2"
+    case $NEW_CATVERSION in
+        *CATVERSION*) echo "BUG: override_dh_installdeb failed to set CATVERSION" >&2
+        return ;;
+    esac
+
+    CATFILE="/usr/share/postgresql/$MAJOR_VER/catalog_version"
+    [ -f "$CATFILE" ] || return 0 # file introduced in 9.6
+    OLD_CATVERSION="$(cat $CATFILE)"
+    [ -z "$OLD_CATVERSION" ] && return
+
+    [ "$OLD_CATVERSION" = "$NEW_CATVERSION" ] && return # no change, nothing to do
+
+    PGCONTROLDATA="/usr/lib/postgresql/$MAJOR_VER/bin/pg_controldata"
+    [ -x "$PGCONTROLDATA" ] || return 0
+
+    echo "PostgreSQL $MAJOR_VER catalog version number changed from $OLD_CATVERSION to $NEW_CATVERSION, checking for clusters using the old version ..."
+
+    pg_lsclusters -h | \
+    while read version cluster port status owner pgdata logfile; do
+        [ "$version" = "$MAJOR_VER" ] || continue
+        [ -d "$pgdata" ] || continue
+        DB_CATVERSION=$(LC_ALL=C $PGCONTROLDATA $pgdata | sed -ne 's/^Catalog version number: *\([0-9]\+\)/\1/p')
+
+        if [ "$DB_CATVERSION" = "$OLD_CATVERSION" ]; then
+            echo "Cluster $MAJOR_VER/$cluster is using catalog version $DB_CATVERSION"
+
+            VARTMPDIR="/var/tmp/postgresql-$MAJOR_VER-$OLD_CATVERSION"
+            if [ ! -d "$VARTMPDIR" ]; then
+                echo "Saving binaries for PostgreSQL $MAJOR_VER catalog version $OLD_CATVERSION in $VARTMPDIR ..."
+                mkdir "$VARTMPDIR" # will fail&exit if (potentially rogue) file exists
+                (
+                    cd "$VARTMPDIR"
+                    mkdir bin lib # lib needs to exists, but we do not copy files there
+                    for f in pg_ctl pg_dump pg_resetwal postgres; do
+                        cp -a /usr/lib/postgresql/$MAJOR_VER/bin/$f bin
+                    done
+                )
+            fi
+        fi
+    done
+}
+
+case "$1" in
+    install|upgrade)
+		dpkg-divert --package postgresql-common --rename --divert /usr/bin/pg_config.libpq-dev --add /usr/bin/pg_config
+        if [ "$2" ]; then
+#            . /usr/share/postgresql-common/maintscripts-functions
+            preinst_check_catversion "$MAJOR_VER" "$CATVERSION"
+        fi ;;
+
+    abort-upgrade)
+        ;;
+
+    *)
+        echo "$0 called with unknown argument \`$1'" 1>&2
+        exit 1
+        ;;
+esac
+
