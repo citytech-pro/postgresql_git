@@ -19,7 +19,7 @@ do_ctl_all() {
     [ -x "$PGBINROOT$2/bin/postgres" ] || return 0
 
     status=0
-    log_daemon_msg "$3"
+#    log_daemon_msg "$3"
     for c in /etc/postgresql/"$2"/*; do
 	[ -e "$c/postgresql.conf" ] || continue
 	name=$(basename "$c")
@@ -32,7 +32,7 @@ do_ctl_all() {
 	fi
 	[ "$start" = "auto" ] || continue
 
-        log_progress_msg "$name"
+#        log_progress_msg "$name"
 	set +e
 	if [ "$1" = "stop" ] || [ "$1" = "restart" ]; then
 	    ERRMSG=$(pg_ctlcluster --force "$2" "$name" $1 2>&1)
@@ -47,7 +47,7 @@ do_ctl_all() {
     if [ $status -ne 0 -a -n "$ERRMSG" ]; then
 	log_failure_msg "$ERRMSG"
     fi
-    log_end_msg $status
+#    log_end_msg $status
     return $status
 }
 

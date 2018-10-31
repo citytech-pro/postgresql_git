@@ -590,7 +590,7 @@ sub check_pidfile_running {
     my $pid = read_pidfile $_[0];
     if (defined $pid) {
 	prepare_exec;
-        my $res = open PS, '-|', '/bin/ps', '-o', 'comm=', '-p', $pid;
+        my $res = open PS, '-|', '/usr/bin/ps', '-o', 'comm=', '-p', $pid;
 	restore_exec;
 	if ($res) {
 	    my $process = <PS>;
@@ -602,7 +602,7 @@ sub check_pidfile_running {
 		return 0;
 	    }
         } else {
-            error "Could not exec /bin/ps";
+            error "Could not exec /usr/bin/ps";
         }
     }
     return undef;
@@ -744,14 +744,15 @@ sub next_free_port {
 	    $res4 = bind (SOCK, sockaddr_in($port, INADDR_ANY));
 	}
 	$have_ip6 = 0;
-	no strict; # avoid compilation errors with Perl < 5.14
-	if (exists $Socket::{"IN6ADDR_ANY"}) { # IPv6
-	    if (socket (SOCK, PF_INET6, SOCK_STREAM, getprotobyname('tcp'))) {
-		$have_ip6 = 1;
-		$res6 = bind (SOCK, sockaddr_in6($port, Socket::IN6ADDR_ANY));
-	    }
-	}
-	use strict;
+# OS Elbrus not implement pack_sockaddr_in6 :: vasiliev
+#	no strict; # avoid compilation errors with Perl < 5.14
+#	if (exists $Socket::{"IN6ADDR_ANY"}) { # IPv6
+#	    if (socket (SOCK, PF_INET6, SOCK_STREAM, getprotobyname('tcp'))) {
+#		$have_ip6 = 1;
+#		$res6 = bind (SOCK, sockaddr_in6($port, Socket::IN6ADDR_ANY));
+#	    }
+#	}
+#	use strict;
 	unless ($have_ip4 or $have_ip6) {
 	    # require at least one protocol to work (PostgreSQL needs it anyway
 	    # for the stats collector)
