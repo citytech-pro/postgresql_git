@@ -1,0 +1,9 @@
+#!/bin/sh
+
+if [ -e $1 ]; then
+    echo "Error:Could not export to $1, directory or file exsist.";
+    exit 1;
+fi
+
+git archive master | tar -x -C $1
+

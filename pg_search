@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# create socket directory
+[ -d /var/run/postgresql ] || install -d -m 2775 -o postgres -g postgres /var/run/postgresql
+
+[ -d /etc/postgresql ] || mkdir -p /etc/postgresql
+
+rm -rf /etc/postgresql/*
+
+for d in $(find / -type f -name postgresql.auto.conf -exec dirname '{}' \;); do
+    if ! [ -e $d/PG_VERSION ]; then continue; fi
+    pgver=$(cat $d/PG_VERSION);
+    pgcluster=$(echo $d | tail -c +2 | tr / "\.");
+    pgpath=/etc/postgresql/$pgver;
+    mkdir -p $pgpath;
+    ln -s $d $pgpath/$pgcluster;
+    echo $pgver $pgcluster;
+done

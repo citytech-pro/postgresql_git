@@ -1,6 +1,8 @@
 .gitattributes export-ignore
 .gitignore export-ignore
 README.md export-ignore
+git-export export-ignore
+pg_search export-ignore
 /etc/postgresql-common/pg_upgradecluster.d/.gitracked export-ignore
 /etc/postgresql/.gitracked export-ignore
 /var/lib/postgresql/.gitracked export-ignore

@@ -1,8 +1,10 @@
 - В данном репозитории содержатся только настроечные/установочные скрипты и
-дерево каталогов установки postgresql. Поэтому перед сборкой deb-пакета
+дерево каталогов postgresql-10. Поэтому перед сборкой deb-пакета
 необходимо скомпилировать postgresql из исходных текстов:
 
-export PG_INST_DIR=<путь к локальному клону pg_inst>/usr
+git-export <путь к директории сборки>
+
+export PG_INST_DIR=<путь к директории сборки>/usr
 
 ./configure --prefix=$PG_INST_DIR/lib/postgresql/10 \
 
@@ -18,6 +20,11 @@ make install (или make install-world, если до этого собрали
 
 mv $PG_INST_DIR/usr/lib/postgresql/10/lib/libpq.\* $PG_INST_DIR/usr/lib/
 
+Если не собирали world, придётся ещё набрать:
+
+make -C contrib all
+
+make -C contrib install
 
 - Перед установкой пакета необходимо установить пакеты debconf и init-system-helpers
 
