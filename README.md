@@ -4,27 +4,27 @@
 
 git-export <путь к директории сборки>
 
-export PG_INST_DIR=<путь к директории сборки>/usr
+cd <каталог исходных текстов>
 
-./configure --prefix=$PG_INST_DIR/lib/postgresql/10 \
+./configure \
 
---datarootdir=$PG_INST_DIR/share/postgresql/10 \
+--prefix=/usr/lib/postgresql/10 \
 
---localedir=$PG_INST_DIR/share/locale \
+--datarootdir=/usr/share/postgresql/10 \
 
---docdir=$PG_INST_DIR/share/doc
+--localedir=/usr/share/locale \
+
+--docdir=/usr/share/doc
 
 make (или make world, но у меня так не собиралось)
 
-make install (или make install-world, если до этого собрали make world)
-
-mv $PG_INST_DIR/usr/lib/postgresql/10/lib/libpq.\* $PG_INST_DIR/usr/lib/
+make install DESTDIR=<путь к директории сборки> (или make install-world DESTDIR=<путь к директории сборки>, если до этого собрали make world)
 
 Если не собирали world, придётся ещё набрать:
 
 make -C contrib all
 
-make -C contrib install
+make -C contrib install DESTDIR=<путь к директории сборки>
 
 - Перед установкой пакета необходимо установить пакеты debconf и init-system-helpers
 

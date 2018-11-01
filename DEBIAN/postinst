@@ -3,8 +3,8 @@
 set -e
 [ "$DPKG_MAINTSCRIPT_PACKAGE" ] && . /usr/share/debconf/confmodule
 
-VERSION=10
-
+VERSION=${DPKG_MAINTSCRIPT_PACKAGE##*-}
+echo "VERSION=" $VERSION
 setup_createclusterconf ()
 {
     [ "$DPKG_MAINTSCRIPT_PACKAGE" ] || return 0
