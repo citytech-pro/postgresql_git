@@ -14,20 +14,15 @@ cd <каталог исходных текстов>
 
 --localedir=/usr/share/locale \
 
---docdir=/usr/share/doc
+--docdir=/usr/share/doc \
 
-make (или make world, но у меня так не собиралось)
+--enable-nls
 
-make install DESTDIR=<путь к директории сборки> (или make install-world DESTDIR=<путь к директории сборки>, если до этого собрали make world)
+make world
 
-Если не собирали world, придётся ещё набрать:
-
-make -C contrib all
-
-make -C contrib install DESTDIR=<путь к директории сборки>
+make install-world DESTDIR=<путь к директории сборки>
 
 - Перед установкой пакета необходимо установить пакеты debconf и init-system-helpers
-
 
 - Во время установки скрипт postinst использует утилиту ucf. В ОС
 Эльбрус, в пакете ucf_3.0030-u2, по какой-то причине, среди контрольных
