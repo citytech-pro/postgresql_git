@@ -18,7 +18,3 @@ if [ -x "/etc/init.d/postgresql" ] && [ "$1" = remove ]; then
 fi
 # End automatically added section
 
-
-if [ "$1" = remove ]; then
-    remove_client_version $VERSION
-fi

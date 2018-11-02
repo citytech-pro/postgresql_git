@@ -4,7 +4,7 @@ set -e
 [ "$DPKG_MAINTSCRIPT_PACKAGE" ] && . /usr/share/debconf/confmodule
 
 VERSION=${DPKG_MAINTSCRIPT_PACKAGE##*-}
-echo "VERSION=" $VERSION
+
 setup_createclusterconf ()
 {
     [ "$DPKG_MAINTSCRIPT_PACKAGE" ] || return 0
@@ -33,7 +33,7 @@ if [ "$1" = configure ]; then
 
     ldconfig
 
-    configure_client_version $VERSION "$2"
+#    configure_client_version $VERSION "$2"
 
 	#    [ "$DPKG_MAINTSCRIPT_PACKAGE" ] && quiet="--quiet" # RedHat doesn't have this
     # Make sure the administrative user exists
@@ -168,11 +168,7 @@ fi
 # End automatically added section
 
 if [ "$1" = configure ]; then
-    if dpkg --compare-versions "$2" lt $VERSION; then
-         configure_version $VERSION;
-    else
-         configure_version $VERSION "$2";
-    fi
+    configure_version $VERSION "$2";
 fi
 
 exit 0
