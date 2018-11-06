@@ -31,7 +31,7 @@ setup_createclusterconf ()
 
 if [ "$1" = configure ]; then
 
-    ldconfig
+#    ldconfig
 
 #    configure_client_version $VERSION "$2"
 

@@ -125,6 +125,6 @@ if [ "$1" = purge ]; then
         rmdir /var/lib/postgresql/ 2>/dev/null || true
 fi
 
-if [ "$1" = "remove" ]; then
-        ldconfig
-fi
+#if [ "$1" = "remove" ]; then
+#        ldconfig
+#fi

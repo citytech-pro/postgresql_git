@@ -37,7 +37,7 @@ _link_manpages() {
     esac
     update-alternatives --install /usr/share/man/$section/$2 \
 	$2 /usr/share/postgresql/$1/man/$section/$2 \
-	$priority $SLAVES
+	$priority $SLAVES >/dev/null
 }
 
 # arguments: version master
@@ -62,7 +62,7 @@ _remove_tsearch() {
 set_system_locale() {
     loc_vars="LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION LC_ALL"
     unset $loc_vars
-    LANG="ru_RU.UTF-8" # fallback locale if nothing is configured explicitly эту-то локаль ОС Эльбрус точно поддерживает!
+    LANG="C" # fallback locale if nothing is configured explicitly
     if which pam_getenv >/dev/null 2>/dev/null; then
         for v in $loc_vars; do
             unset val
